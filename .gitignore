@@ -4,6 +4,8 @@ backend/venv/
 backend/__pycache__/
 backend/*.pyc
 
+backend/campaigns.db
+
 # Environment variables
 .env
 backend/.env
