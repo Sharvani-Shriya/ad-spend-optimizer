@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ad Channel Spend Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<style>
+  :root {
+    --ink: #101425;
+    --panel: #171c33;
+    --panel-line: #2a3152;
+    --paper: #F4F1EA;
+    --text-dim: #9aa1c2;
+    --text-bright: #ede9dd;
+    --gold: #E0A836;
+    --rose: #D9705F;
+    --mono-num: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text-bright);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  header.page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--panel-line);
+    padding-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 2.1rem;
+    margin: 0 0 8px;
+    color: var(--paper);
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  .avg-roas {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .avg-roas .label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .avg-roas .value {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    color: var(--gold);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  thead th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--panel-line);
+  }
+
+  thead th.num, td.num { text-align: right; }
+
+  tbody td {
+    padding: 13px 12px;
+    border-bottom: 1px solid rgba(42, 49, 82, 0.5);
+    color: var(--text-bright);
+  }
+
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  .channel-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    border-radius: 3px;
+    border: 1px solid var(--panel-line);
+    color: var(--text-dim);
+  }
+
+  .roas-val { font-weight: 600; }
+  .roas-good { color: var(--gold); }
+  .roas-bad { color: var(--rose); }
+
+  .action-row {
+    margin: 40px 0 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  button.suggest-btn {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 13px 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+
+  button.suggest-btn:hover { background: #ecb84e; }
+  button.suggest-btn:active { transform: scale(0.98); }
+  button.suggest-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .suggestion-box {
+    margin-top: 28px;
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 24px 28px;
+  }
+
+  .suggestion-box .eyebrow {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .suggestion-box .headline {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    color: var(--paper);
+    margin: 0 0 10px;
+    line-height: 1.35;
+  }
+
+  .suggestion-box .reason {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  footer {
+    margin-top: 48px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 640px) {
+    header.page-head { flex-direction: column; align-items: flex-start; }
+    .avg-roas { text-align: left; }
+    table { font-size: 0.82rem; }
+    thead th:nth-child(3), tbody td:nth-child(3) { display: none; } /* hide clicks on mobile */
+  }
+</style>
+</head>
+<body>
+<div id="app" class="wrap">
+
+  <header class="page-head">
+    <div>
+      <h1>Ad Channel Spend Optimizer</h1>
+      <p class="subtitle">Campaign performance across Search, Social, Display and Video — with a ROAS-based reallocation suggestion.</p>
+    </div>
+    <div class="avg-roas" v-if="averageRoas !== null">
+      <div class="label">Account average ROAS</div>
+      <div class="value">{{ averageRoas }}x</div>
+    </div>
+  </header>
+
+  <table v-if="campaigns.length">
+    <thead>
+      <tr>
+        <th>Campaign</th>
+        <th>Channel</th>
+        <th class="num">Clicks</th>
+        <th class="num">Spend</th>
+        <th class="num">CPA</th>
+        <th class="num">ROAS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="c in campaigns" :key="c.id">
+        <td>{{ c.name }}</td>
+        <td><span class="channel-tag">{{ c.channel }}</span></td>
+        <td class="num">{{ c.clicks.toLocaleString() }}</td>
+        <td class="num">₹{{ Math.round(c.spend).toLocaleString() }}</td>
+        <td class="num">₹{{ c.cpa !== null ? c.cpa.toLocaleString() : '—' }}</td>
+        <td class="num roas-val" :class="roasClass(c.roas)">{{ c.roas !== null ? c.roas + 'x' : '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p v-else style="color: var(--text-dim);">Loading campaigns…</p>
+
+  <div class="action-row">
+    <button class="suggest-btn" @click="fetchSuggestion" :disabled="loadingSuggestion">
+      {{ loadingSuggestion ? 'Analyzing…' : 'Get Optimization Suggestion' }}
+    </button>
+  </div>
+
+  <div class="suggestion-box" v-if="suggestion">
+    <div class="eyebrow">Reallocation suggestion</div>
+    <template v-if="suggestion.suggestion_available">
+      <p class="headline">{{ suggestion.human_readable }}</p>
+      <p class="reason">{{ suggestion.reason }}</p>
+    </template>
+    <template v-else>
+      <p class="headline">{{ suggestion.message }}</p>
+    </template>
+  </div>
+
+  <footer>Backend: FastAPI + SQLite · Frontend: Vue 3</footer>
+</div>
+
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+const API_BASE = "http://localhost:8000";
+
+createApp({
+  setup() {
+    const campaigns = ref([]);
+    const averageRoas = ref(null);
+    const suggestion = ref(null);
+    const loadingSuggestion = ref(false);
+
+    async function loadCampaigns() {
+      try {
+        const res = await fetch(`${API_BASE}/campaigns`);
+        const data = await res.json();
+        campaigns.value = data.campaigns;
+        averageRoas.value = data.average_roas;
+      } catch (err) {
+        console.error("Failed to load campaigns:", err);
+      }
+    }
+
+    async function fetchSuggestion() {
+      loadingSuggestion.value = true;
+      try {
+        const res = await fetch(`${API_BASE}/suggest-reallocation`);
+        suggestion.value = await res.json();
+      } catch (err) {
+        console.error("Failed to fetch suggestion:", err);
+        suggestion.value = { suggestion_available: false, message: "Could not reach the API. Is the backend running?" };
+      } finally {
+        loadingSuggestion.value = false;
+      }
+    }
+
+    function roasClass(roas) {
+      if (roas === null || averageRoas.value === null) return "";
+      return roas >= averageRoas.value ? "roas-good" : "roas-bad";
+    }
+
+    onMounted(loadCampaigns);
+
+    return { campaigns, averageRoas, suggestion, loadingSuggestion, fetchSuggestion, roasClass };
+  }
+}).mount("#app");
+</script>
+</body>
+</html>
